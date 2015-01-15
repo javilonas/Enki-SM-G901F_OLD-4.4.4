@@ -121,7 +121,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 			}
 		}
 		
-		usleep_range(4000, 4000);
+		usleep_range(5000, 5000);
 
 		pr_info("%s : disp_en_gpio = %d\n", __func__, ctrl_pdata->disp_en_gpio);
 		if (gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
@@ -137,7 +137,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 				__func__);
 			return ret;
 		}
-		usleep_range(4000, 4000);
+		usleep_range(5000, 5000);
 
 	} else {
 		ret = regulator_disable(
@@ -462,8 +462,8 @@ static void __mdss_dsi_ctrl_setup(struct mdss_panel_data *pdata)
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
-	pr_err("%s+: ctrl=%p ndx=%d\n",
-				__func__, ctrl_pdata, ctrl_pdata->ndx);
+	//pr_err("%s+: ctrl=%p ndx=%d\n",
+	//			__func__, ctrl_pdata, ctrl_pdata->ndx);
 
 	pinfo = &pdata->panel_info;
 

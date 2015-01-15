@@ -125,7 +125,11 @@ static void w1_gpio_write_bit(void *data, u8 bit)
 		(pdata->slave_speed == 0)? w1_delay(64) : w1_delay(10);
 	} else {
 		write_bit(data, 0);
+#ifdef CONFIG_W1_SLAVE_DS28E15 /* delay time for DS28EL15 */
 		(pdata->slave_speed == 0)? w1_delay(60) : w1_delay(8);
+#else /* delay time for DS28EL35 */
+		(pdata->slave_speed == 0)? w1_delay(60) : w1_delay(6);
+#endif
 		write_bit(data, 1);
 		(pdata->slave_speed == 0)? w1_delay(10) : w1_delay(10);
 	}

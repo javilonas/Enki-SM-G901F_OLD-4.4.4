@@ -2693,9 +2693,6 @@ static int module_sig_check(struct load_info *info)
 /* Sanity checks against invalid binaries, wrong arch, weird elf version. */
 static int elf_header_check(struct load_info *info)
 {
-#ifdef CONFIG_TIMA_LKMAUTH
-	int i;
-#endif
 	if (info->len < sizeof(*(info->hdr)))
 		return -ENOEXEC;
 
@@ -2712,14 +2709,12 @@ static int elf_header_check(struct load_info *info)
 
 #ifdef CONFIG_TIMA_LKMAUTH
 	if (lkmauth(info->hdr, info->len) != 0) {
-		for(i = 0; i < 5 ; i++) {
-			if (lkmauth(info->hdr, info->len) == 0)
-				goto success;
-		}
-		panic("LKMauth failed");
+		//err = -ENOEXEC;
+		//goto free_hdr;
+		return -ENOEXEC;
 	}
-success:
 #endif
+
 	return 0;
 }
 

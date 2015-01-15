@@ -102,7 +102,6 @@
 #define SSP_STATUS_MONITOR	0
 #endif
 #if SSP_STATUS_MONITOR
-#define SSP_MONITOR_TIME	4
 extern int current_cable_type;
 #endif
 

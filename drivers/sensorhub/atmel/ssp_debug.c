@@ -213,6 +213,31 @@ void sync_sensor_state(struct ssp_data *data)
 #endif
 }
 
+#if SSP_STATUS_MONITOR
+static int check_abnormal_status(struct ssp_data *data, unsigned int uSensor)
+{
+	static s16 pre_buff[3] = {0, };
+	int ret=0;
+
+	if(pre_buff[0] == data->buf[uSensor].x)
+		if(pre_buff[1] == data->buf[uSensor].y)
+			if(pre_buff[2] == data->buf[uSensor].z) {
+				pr_err("[SSP]: %s - Sensor[%d]\n", __func__, uSensor);
+				ret = -1;
+				pre_buff[0] = 0;
+				pre_buff[1] = 0;
+				pre_buff[2] = 0;
+				return ret;
+			}
+
+	pre_buff[0] = data->buf[uSensor].x;
+	pre_buff[1] = data->buf[uSensor].y;
+	pre_buff[2] = data->buf[uSensor].z;
+
+	return ret;
+}
+#endif
+
 static void print_sensordata(struct ssp_data *data, unsigned int uSensor)
 {
 	switch (uSensor) {
@@ -378,33 +403,6 @@ int initialize_debug_timer(struct ssp_data *data)
 }
 
 #if SSP_STATUS_MONITOR
-static int check_abnormal_status(struct ssp_data *data, unsigned int uSensor)
-{
-	static s16 pre_buff[3] = {0, };
-	int ret=0;
-
-	if(pre_buff[0] == data->buf[uSensor].x)
-		if(pre_buff[1] == data->buf[uSensor].y)
-			if(pre_buff[2] == data->buf[uSensor].z) {
-				pr_err("[SSP]: %s - Sensor[%d] data not changed!!\n", __func__, uSensor);
-				if(data->batchLatencyBuf[ACCELEROMETER_SENSOR] >= (SSP_MONITOR_TIME * 1000))
-					pr_err("[SSP]:- batchLatencyBuf[%d]ms pass...!!!\n", data->batchLatencyBuf[ACCELEROMETER_SENSOR]);
-				else {
-					ret = -1;
-					pre_buff[0] = 0;
-					pre_buff[1] = 0;
-					pre_buff[2] = 0;
-				}
-				return ret;
-			}
-
-	pre_buff[0] = data->buf[uSensor].x;
-	pre_buff[1] = data->buf[uSensor].y;
-	pre_buff[2] = data->buf[uSensor].z;
-
-	return ret;
-}
-
 static void debug_polling_func(struct work_struct *work)
 {
 	struct ssp_data *data = container_of((struct delayed_work *)work, struct ssp_data, polling_work);
@@ -418,14 +416,12 @@ static void debug_polling_func(struct work_struct *work)
 		goto out;
 	}
 
-#if 0 /* Check raised IRQ count number */
+#if 1 /* Check raised IRQ count number */
 	if (atomic_read(&data->aSensorEnable) & (!data->uSubIrqCnt)) {
 		pr_err("[SSP] : %s(%u) aSensorEnable:0x%x. No irp happened. MCU reset now!\n",
-			__func__, data->uSubIrqCnt, (unsigned int)atomic_read(&data->aSensorEnable));
-		if(data->bSspShutdown == false) {
-			//reset_mcu(data);
-			goto out;
-		}
+			__func__, data->uIrqCnt, (unsigned int)atomic_read(&data->aSensorEnable));
+		if(data->bSspShutdown == false)
+			reset_mcu(data);
 		else
 			pr_err("[SSP] : %s MCU is shutdowned. Could not reset.\n", __func__);
 		goto out;
@@ -442,7 +438,7 @@ static void debug_polling_func(struct work_struct *work)
 	data->uSubIrqCnt = 0;
 
 out:
-	schedule_delayed_work(&data->polling_work, msecs_to_jiffies(SSP_MONITOR_TIME * 1000));
+	schedule_delayed_work(&data->polling_work, msecs_to_jiffies(4000));
 }
 
 int initialize_polling_work(struct ssp_data *data)

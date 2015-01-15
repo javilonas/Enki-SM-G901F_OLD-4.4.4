@@ -46,7 +46,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Evgeniy Polyakov <zbr@ioremap.net>");
 MODULE_DESCRIPTION("Driver for 1-wire Dallas network protocol.");
 
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 static int w1_timeout = 2;
 int w1_max_slave_count = 1;
 int w1_max_slave_ttl = 2;
@@ -524,7 +524,7 @@ static ssize_t w1_master_attribute_store_remove(struct device *dev,
 }
 
 void w1_master_search(void);
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 static ssize_t w1_master_attribute_show_verify_mac(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	int result = -1;
@@ -581,7 +581,7 @@ static W1_MASTER_ATTR_RW(search, S_IRUGO | S_IWUSR | S_IWGRP);
 static W1_MASTER_ATTR_RW(pullup, S_IRUGO | S_IWUSR | S_IWGRP);
 static W1_MASTER_ATTR_RW(add, S_IRUGO | S_IWUSR | S_IWGRP);
 static W1_MASTER_ATTR_RW(remove, S_IRUGO | S_IWUSR | S_IWGRP);
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 static W1_MASTER_ATTR_RO(verify_mac, S_IRUGO);
 static W1_MASTER_ATTR_RO(check_id, S_IRUGO);
 static W1_MASTER_ATTR_RO(check_color, S_IRUGO);
@@ -602,7 +602,7 @@ static struct attribute *w1_master_default_attrs[] = {
 	&w1_master_attribute_pullup.attr,
 	&w1_master_attribute_add.attr,
 	&w1_master_attribute_remove.attr,
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 	&w1_master_attribute_verify_mac.attr,
 	&w1_master_attribute_check_id.attr,
 	&w1_master_attribute_check_color.attr,
@@ -638,7 +638,7 @@ static int w1_uevent(struct device *dev, struct kobj_uevent_env *env)
 		md = container_of(dev, struct w1_master, dev);
 		event_owner = "master";
 		name = md->name;
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 		master_dev = md; //container_of(dev, struct w1_master, dev);
 		printk(KERN_ERR "%s master_dev name = %s\n", __func__, master_dev->name);
 #endif	/* CONFIG_W1_SLAVE_DS28E15 */
@@ -667,7 +667,7 @@ end:
 	return err;
 }
 
-#if defined(CONFIG_W1_SLAVE_DS28E15)
+#if defined(CONFIG_W1_SLAVE_DS28E15) || defined(CONFIG_W1_SLAVE_DS28EL35)
 static void w1_search_process(struct w1_master *dev, u8 search_type);
 
 void w1_master_search(void)

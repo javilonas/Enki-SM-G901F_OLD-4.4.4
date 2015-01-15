@@ -1885,7 +1885,7 @@ static int try_set_ctrl(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 			inst->flags &= ~VIDC_THUMBNAIL;
 			break;
 		case V4L2_MPEG_VIDC_VIDEO_SYNC_FRAME_DECODE_ENABLE:
-			inst->flags |= VIDC_THUMBNAIL;
+			inst->flags |= ~VIDC_THUMBNAIL;
 			break;
 		default:
 			/* Should never reach */
