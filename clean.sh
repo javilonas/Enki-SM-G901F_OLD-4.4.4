@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TOOLCHAIN="/home/lonas/Kernel_Lonas/toolchains/arm-eabi-4.7/bin/arm-eabi-"
+TOOLCHAIN="/home/lonas/Kernel_Lonas/toolchains/arm-eabi-4.8/bin/arm-eabi-"
 DIR="/home/lonas/Kernel_Lonas/Enki-SM-G901F"
 export KERNELDIR=`readlink -f .`
 

@@ -13,6 +13,8 @@ if [ "${1}" != "" ];then
   export KERNELDIR=`readlink -f ${1}`
 fi
 
+TOOLCHAIN="/home/lonas/Kernel_Lonas/toolchains/arm-eabi-4.8/bin/arm-eabi-"
+TOOLCHAIN_PATCH="/home/lonas/Kernel_Lonas/toolchains/arm-eabi-4.8/bin"
 ROOTFS_PATH="/home/lonas/Kernel_Lonas/Enki-SM-G901F/ramdisk"
 RAMFS_TMP="/home/lonas/Kernel_Lonas/tmp/ramfs-source-sgs5"
 
@@ -63,6 +65,8 @@ find . -type f -name '*.pl' -exec chmod 755 {} \;
 echo "ramfs_tmp = $RAMFS_TMP"
 
 echo "#################### Eliminando build anterior ####################"
+make ARCH=arm CROSS_COMPILE=$TOOLCHAIN -j`grep 'processor' /proc/cpuinfo | wc -l` mrproper
+make ARCH=arm CROSS_COMPILE=$TOOLCHAIN -j`grep 'processor' /proc/cpuinfo | wc -l` clean
 
 find -name '*.ko' -exec rm -rf {} \;
 rm -rf $KERNELDIR/arch/arm/boot/zImage > /dev/null 2>&1
@@ -77,6 +81,28 @@ rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
 rm $KERNELDIR/boot.img > /dev/null 2>&1
 rm $KERNELDIR/*.ko > /dev/null 2>&1
 rm $KERNELDIR/*.img > /dev/null 2>&1
+
+echo "#################### Make defconfig ####################"
+make ARCH=arm CROSS_COMPILE=$TOOLCHAIN apq8084_lonas_defconfig KCONFIG_VARIANT= KCONFIG_LOG_SELINUX= KCONFIG_TIMA= KCONFIG_DMVERITY= 
+
+#nice -n 10 make -j7 ARCH=arm CROSS_COMPILE=$TOOLCHAIN || exit -1
+
+nice -n 10 make -j6 ARCH=arm CROSS_COMPILE=$TOOLCHAIN >> compile.log 2>&1 || exit -1
+
+make -j`grep 'processor' /proc/cpuinfo | wc -l` ARCH=arm CROSS_COMPILE=$TOOLCHAIN >> compile.log 2>&1 || exit -1
+
+#make -j`grep 'processor' /proc/cpuinfo | wc -l` ARCH=arm CROSS_COMPILE=$TOOLCHAIN || exit -1
+
+
+if [ ! -d $ROOTFS_PATH/system/lib/modules ]; then
+        mkdir -p $ROOTFS_PATH/system/lib/modules
+fi
+
+find . -name "*.ko" -exec mv {} . \;
+find . -name '*.ko' -exec cp -av {} $ROOTFS_PATH/system/lib/modules/ \;
+unzip $KERNELDIR/proprietary-modules/proprietary-modules.zip -d $ROOTFS_PATH/system/lib/modules/
+${CROSS_COMPILE}strip --strip-unneeded ./*.ko
+${CROSS_COMPILE}strip --strip-unneeded $ROOTFS_PATH/system/lib/modules/*.ko
 
 echo "#################### Update Ramdisk ####################"
 rm -f $KERNELDIR/releasetools/tar/$KERNEL_VERSION-$REVISION$KBUILD_BUILD_VERSION-$VERSION_KL.tar > /dev/null 2>&1
@@ -109,7 +135,7 @@ echo "#################### Compilar Kernel ####################"
 #compile kernel
 cd $KERNELDIR
 
-nice -n 10 make -j12 >> compile.log 2>&1 || exit -1
+nice -n 10 make -j6 ARCH=arm CROSS_COMPILE=$TOOLCHAIN zImage-dtb || exit 1
 
 echo "#################### Generar nueva dt image ####################"
 
@@ -119,16 +145,6 @@ chmod a+r $KERNELDIR/arch/arm/boot/dt.img
 echo "#################### Generar nuevo boot.img ####################"
 
 $TOOLBASE/mkbootimg --base 0x0 --kernel $KERNELDIR/arch/arm/boot/zImage-dtb --ramdisk $RAMFS_TMP.cpio.gz --cmdline 'console=null androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3' --ramdisk_offset 0x2000000 --tags_offset 0x1e00000 --pagesize 4096 --dt $KERNELDIR/arch/arm/boot/dt.img -o $KERNELDIR/boot.img
-
-if [ ! -d $ROOTFS_PATH/system/lib/modules ]; then
-        mkdir -p $ROOTFS_PATH/system/lib/modules
-fi
-
-find . -name "*.ko" -exec mv {} . \;
-find . -name '*.ko' -exec cp -av {} $ROOTFS_PATH/system/lib/modules/ \;
-unzip $KERNELDIR/proprietary-modules/proprietary-modules.zip -d $ROOTFS_PATH/system/lib/modules/
-${CROSS_COMPILE}strip --strip-unneeded ./*.ko
-${CROSS_COMPILE}strip --strip-unneeded $ROOTFS_PATH/system/lib/modules/*.ko
 
 echo "Started  : $start_time"
 echo "Finished : `date +'%d/%m/%y %H:%M:%S'`"
