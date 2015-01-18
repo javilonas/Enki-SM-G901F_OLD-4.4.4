@@ -2,10 +2,15 @@
 
 TOOLCHAIN="/home/lonas/Kernel_Lonas/toolchains/arm-eabi-4.7/bin/arm-eabi-"
 DIR="/home/lonas/Kernel_Lonas/Enki-SM-G901F"
+export KERNELDIR=`readlink -f .`
 
 echo "#################### Eliminando Restos ####################"
 if [ -e boot.img ]; then
 	rm boot.img
+fi
+
+if [ -e dt.img ]; then
+	rm dt.img
 fi
 
 if [ -e boot.dt.img ]; then
@@ -23,6 +28,22 @@ fi
 if [ -e ramdisk.cpio.gz ]; then
         rm ramdisk.cpio.gz
 fi
+
+echo "#################### Eliminando build anterior ####################"
+
+find -name '*.ko' -exec rm -rf {} \;
+rm -rf $KERNELDIR/arch/arm/boot/zImage > /dev/null 2>&1
+rm -rf $KERNELDIR/arch/arm/boot/zImage-dtb > /dev/null 2>&1
+rm -rf $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
+rm -rf $KERNELDIR/arch/arm/boot/*.img > /dev/null 2>&1
+rm -rf $KERNELDIR/arch/arm/boot/dts/*.dtb > /dev/null 2>&1
+rm -rf $KERNELDIR/arch/arm/boot/dts/*.reverse.dts > /dev/null 2>&1
+rm $KERNELDIR/zImage > /dev/null 2>&1
+rm $KERNELDIR/zImage-dtb > /dev/null 2>&1
+rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
+rm $KERNELDIR/boot.img > /dev/null 2>&1
+rm $KERNELDIR/*.ko > /dev/null 2>&1
+rm $KERNELDIR/*.img > /dev/null 2>&1
 
 #make distclean
 make clean && make mrproper

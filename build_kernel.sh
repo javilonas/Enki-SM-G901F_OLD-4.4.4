@@ -7,7 +7,7 @@ echo "#################### Eliminando Restos ####################"
 echo "#################### Preparando Entorno ####################"
 export KERNELDIR=`readlink -f .`
 export RAMFS_SOURCE=`readlink -f $KERNELDIR/ramdisk`
-export TOOLBASE="/home/lonas/Kernel_Lonas/Enki-SM-G901F/scripts"
+export TOOLBASE="/home/lonas/Kernel_Lonas/Enki-SM-G901F/buildtools"
 
 if [ "${1}" != "" ];then
   export KERNELDIR=`readlink -f ${1}`
@@ -71,7 +71,9 @@ rm -rf $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
 rm -rf $KERNELDIR/arch/arm/boot/*.img > /dev/null 2>&1
 rm -rf $KERNELDIR/arch/arm/boot/dts/*.dtb > /dev/null 2>&1
 rm -rf $KERNELDIR/arch/arm/boot/dts/*.reverse.dts > /dev/null 2>&1
-rm $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
+rm $KERNELDIR/zImage > /dev/null 2>&1
+rm $KERNELDIR/zImage-dtb > /dev/null 2>&1
+rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
 rm $KERNELDIR/boot.img > /dev/null 2>&1
 rm $KERNELDIR/*.ko > /dev/null 2>&1
 rm $KERNELDIR/*.img > /dev/null 2>&1
@@ -116,17 +118,22 @@ chmod a+r $KERNELDIR/arch/arm/boot/dt.img
 
 echo "#################### Generar nuevo boot.img ####################"
 
-$TOOLBASE/mkbootimg_dtb --cmdline 'console=ttyHSL0,115200,n8 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3' --kernel $KERNELDIR/arch/arm/boot/zImage --ramdisk $RAMFS_TMP.cpio.gz --base 0x00000000 --pagesize 4096 --ramdisk_offset 0x02000000 --tags_offset 0x01E00000 --dt $KERNELDIR/arch/arm/boot/dt.img --output $KERNELDIR/boot.img
+$TOOLBASE/mkbootimg --base 0x0 --kernel $KERNELDIR/arch/arm/boot/zImage-dtb --ramdisk $RAMFS_TMP.cpio.gz --cmdline 'console=null androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3' --ramdisk_offset 0x2000000 --tags_offset 0x1e00000 --pagesize 4096 --dt $KERNELDIR/arch/arm/boot/dt.img -o $KERNELDIR/boot.img
 
 if [ ! -d $ROOTFS_PATH/system/lib/modules ]; then
         mkdir -p $ROOTFS_PATH/system/lib/modules
 fi
 
-find . -name "boot.img"
 find . -name "*.ko" -exec mv {} . \;
 find . -name '*.ko' -exec cp -av {} $ROOTFS_PATH/system/lib/modules/ \;
 unzip $KERNELDIR/proprietary-modules/proprietary-modules.zip -d $ROOTFS_PATH/system/lib/modules/
+${CROSS_COMPILE}strip --strip-unneeded ./*.ko
 ${CROSS_COMPILE}strip --strip-unneeded $ROOTFS_PATH/system/lib/modules/*.ko
+
+echo "Started  : $start_time"
+echo "Finished : `date +'%d/%m/%y %H:%M:%S'`"
+find . -name "boot.img"
+find . -name "*.ko"
 
 echo "#################### Preparando flasheables ####################"
 
@@ -144,11 +151,11 @@ echo "#################### Eliminando restos ####################"
 
 rm $KERNELDIR/releasetools/zip/boot.img > /dev/null 2>&1
 rm $KERNELDIR/releasetools/tar/boot.img > /dev/null 2>&1
-rm $KERNELDIR/boot.img > /dev/null 2>&1
-rm $KERNELDIR/zImage > /dev/null 2>&1
-rm $KERNELDIR/zImage-dtb > /dev/null 2>&1
-rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
-rm $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
+#rm $KERNELDIR/boot.img > /dev/null 2>&1
+#rm $KERNELDIR/zImage > /dev/null 2>&1
+#rm $KERNELDIR/zImage-dtb > /dev/null 2>&1
+#rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
+#rm $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
 rm -rf /home/lonas/Kernel_Lonas/tmp/ramfs-source-sgs5 > /dev/null 2>&1
 rm /home/lonas/Kernel_Lonas/tmp/ramfs-source-sgs5.cpio.gz > /dev/null 2>&1
 echo "#################### Terminado ####################"
