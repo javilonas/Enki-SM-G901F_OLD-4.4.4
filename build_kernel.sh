@@ -8,6 +8,7 @@ echo "#################### Preparando Entorno ####################"
 export KERNELDIR=`readlink -f .`
 export RAMFS_SOURCE=`readlink -f $KERNELDIR/ramdisk`
 export TOOLBASE="/home/lonas/Kernel_Lonas/Enki-SM-G901F/buildtools"
+export USE_SEC_FIPS_MODE=true
 
 if [ "${1}" != "" ];then
   export KERNELDIR=`readlink -f ${1}`
@@ -24,6 +25,7 @@ export REVISION="RC"
 
 export KBUILD_BUILD_VERSION="1"
 
+export KCONFIG_NOTIMESTAMP=true
 export ARCH=arm
 
 #make apq8084_sec_defconfig VARIANT_DEFCONFIG=apq8084_sec_kccat6_eur_defconfig SELINUX_DEFCONFIG=selinux_defconfig
