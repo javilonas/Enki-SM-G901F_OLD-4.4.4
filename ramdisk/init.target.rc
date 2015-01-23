@@ -101,9 +101,19 @@ on property:persist.usb.chgdisabled=0
     write /sys/class/power_supply/battery/charging_enabled 1
 
 service qrngd /system/bin/qrngd -f
-   class main
-   user root
-   group root
+    class main
+    user root
+    group root
+
+service qrngp /system/bin/qrngp
+    class main
+    user root
+    group root
+    oneshot
+    disabled
+
+on property:sys.boot_completed=1
+    start qrngp
 
 service qseecomd /system/bin/qseecomd
    class core
@@ -118,6 +128,14 @@ service thermal-engine /system/bin/thermal-engine
    class main
    user root
    group root
+
+service security-check1 /sbin/security_boot_check system
+    class core
+    oneshot
+
+service security-check2 /sbin/security_boot_check recovery
+    class core
+    oneshot
 
 service time_daemon /system/bin/time_daemon
    class late_start
@@ -177,14 +195,14 @@ service usf-post-boot /system/bin/sh /system/etc/usf_post_boot.sh
 
 service prepare-mobicore /system/bin/mcStarter tbase300
     class core
-	user root
-	group root
-	oneshot
+    user root
+    group root
+    oneshot
 
 service run-mobicore /system/bin/sh /system/bin/mobicore-startup.sh
-	class core
-	user system
-	group system
+    class core
+    user system
+    group system
 
 on property:init.svc.bootanim=stopped
     start usf-post-boot
@@ -221,7 +239,9 @@ service mdm_helper_proxy /system/bin/mdm_helper_proxy
     disabled
 
 service mdm_launcher /system/bin/sh /init.mdm.sh
-    class core
+    class late_start
+    user root
+    disabled
     oneshot
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
@@ -327,6 +347,27 @@ service TvoutService_C /system/bin/bintvoutservice
      group graphics
 on property:ro.SecEDS.enable=false
     stop TvoutService_C
+
+# Secure Storage startup
+service secure_storage /system/bin/secure_storage_daemon
+    class core
+    user system
+    group system
+    disabled
+
+on property:ro.securestorage.support=true
+    mkdir /dev/.secure_storage
+    chmod 0711 /dev/.secure_storage
+    chown system system /dev/.secure_storage
+    restorecon -R /dev/.secure_storage
+    start secure_storage
+
+on property:ro.securestorage.knox=true
+    mkdir /dev/.secure_storage
+    chmod 0711 /dev/.secure_storage
+    chown system system /dev/.secure_storage
+    restorecon -R /dev/.secure_storage
+    start secure_storage
 
 on property:dev.bootcomplete=1
     write /sys/module/rmnet_usb/parameters/dump_ctrl_msg 2

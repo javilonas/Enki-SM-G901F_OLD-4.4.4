@@ -1,6 +1,7 @@
 #!/bin/sh
-# Build Script: Javilonas, 11-01-2015
+# Build Script: Javilonas, 23-01-2015
 # Javilonas <admin@lonasdigital.com>
+#
 start_time=`date +'%d/%m/%y %H:%M:%S'`
 echo "#################### Eliminando Restos ####################"
 ./clean.sh > /dev/null 2>&1
@@ -26,11 +27,26 @@ export REVISION="RC"
 export KBUILD_BUILD_VERSION="1"
 
 export KCONFIG_NOTIMESTAMP=true
-export ARCH=arm
 
-#make apq8084_sec_defconfig VARIANT_DEFCONFIG=apq8084_sec_kccat6_eur_defconfig SELINUX_DEFCONFIG=selinux_defconfig
+export BOARD_VENDOR=samsung
+export TARGET_ARCH=arm
+export TARGET_NO_BOOTLOADER=true
+export TARGET_BOARD_PLATFORM=apq8084
+export TARGET_CPU_ABI=armeabi-v7a
+export TARGET_CPU_ABI2=armeabi
+export TARGET_ARCH_VARIANT=armv7-a-neon
+export TARGET_CPU_VARIANT=krait
+export ARCH_ARM_HAVE_TLS_REGISTER=true
+export TARGET_BOARD_PLATFORM_GPU=qcom-adreno420
+export TARGET_BOOTLOADER_BOARD_NAME=APQ8084
+export TARGET_CPU_SMP=true
+export TARGET_GLOBAL_CFLAGS=-mfpu=neon-vfpv4
+export TARGET_GLOBAL_CFLAGS=-mfloat-abi=softfp
+export TARGET_GLOBAL_CPPFLAGS=-mfpu=neon-vfpv4
+export TARGET_GLOBAL_CPPFLAGS=-mfloat-abi=softfp
 
-#cp .config arch/arm/configs/apq8084_lonas_defconfig
+export COMMON_GLOBAL_CFLAGS=-DQCOM_HARDWARE
+
 
 cp arch/arm/configs/apq8084_lonas_defconfig .config
 
@@ -85,7 +101,8 @@ rm $KERNELDIR/*.ko > /dev/null 2>&1
 rm $KERNELDIR/*.img > /dev/null 2>&1
 
 echo "#################### Make defconfig ####################"
-make ARCH=arm CROSS_COMPILE=$TOOLCHAIN apq8084_lonas_defconfig KCONFIG_VARIANT= KCONFIG_LOG_SELINUX= KCONFIG_TIMA= KCONFIG_DMVERITY= 
+make ARCH=arm CROSS_COMPILE=$TOOLCHAIN apq8084_lonas_defconfig KCONFIG_VARIANT= KCONFIG_DEBUG= KCONFIG_LOG_SELINUX= KCONFIG_SELINUX= KCONFIG_TIMA= KCONFIG_DMVERITY= 
+#make ARCH=arm CROSS_COMPILE=$TOOLCHAIN apq8084_sec_defconfig VARIANT_DEFCONFIG=apq8084_sec_kccat6_eur_defconfig DEBUG_DEFCONFIG=apq8084_sec_userdebug_defconfig TIMA_DEFCONFIG=tima_defconfig DMVERITY_DEFCONFIG=dmverity_defconfig SELINUX_LOG_DEFCONFIG=selinux_log_defconfig SELINUX_DEFCONFIG=selinux_defconfig
 
 #nice -n 10 make -j7 ARCH=arm CROSS_COMPILE=$TOOLCHAIN || exit -1
 
@@ -96,15 +113,15 @@ make -j`grep 'processor' /proc/cpuinfo | wc -l` ARCH=arm CROSS_COMPILE=$TOOLCHAI
 #make -j`grep 'processor' /proc/cpuinfo | wc -l` ARCH=arm CROSS_COMPILE=$TOOLCHAIN || exit -1
 
 
-if [ ! -d $ROOTFS_PATH/system/lib/modules ]; then
-        mkdir -p $ROOTFS_PATH/system/lib/modules
-fi
+#if [ ! -d $ROOTFS_PATH/system/lib/modules ]; then
+#        mkdir -p $ROOTFS_PATH/system/lib/modules
+#fi
 
 find . -name "*.ko" -exec mv {} . \;
-find . -name '*.ko' -exec cp -av {} $ROOTFS_PATH/system/lib/modules/ \;
-unzip $KERNELDIR/proprietary-modules/proprietary-modules.zip -d $ROOTFS_PATH/system/lib/modules/
+#find . -name '*.ko' -exec cp -av {} $ROOTFS_PATH/system/lib/modules/ \;
+#unzip $KERNELDIR/proprietary-modules/proprietary-modules.zip -d $ROOTFS_PATH/system/lib/modules/
 ${CROSS_COMPILE}strip --strip-unneeded ./*.ko
-${CROSS_COMPILE}strip --strip-unneeded $ROOTFS_PATH/system/lib/modules/*.ko
+#${CROSS_COMPILE}strip --strip-unneeded $ROOTFS_PATH/system/lib/modules/*.ko
 
 echo "#################### Update Ramdisk ####################"
 rm -f $KERNELDIR/releasetools/tar/$KERNEL_VERSION-$REVISION$KBUILD_BUILD_VERSION-$VERSION_KL.tar > /dev/null 2>&1
@@ -134,7 +151,6 @@ gzip -9 -f $RAMFS_TMP.cpio
 
 echo "#################### Compilar Kernel ####################"
 
-#compile kernel
 cd $KERNELDIR
 
 nice -n 10 make -j6 ARCH=arm CROSS_COMPILE=$TOOLCHAIN zImage-dtb || exit 1
@@ -146,7 +162,7 @@ chmod a+r $KERNELDIR/arch/arm/boot/dt.img
 
 echo "#################### Generar nuevo boot.img ####################"
 
-$TOOLBASE/mkbootimg --base 0x0 --kernel $KERNELDIR/arch/arm/boot/zImage-dtb --ramdisk $RAMFS_TMP.cpio.gz --cmdline 'console=null androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3' --ramdisk_offset 0x2000000 --tags_offset 0x1e00000 --pagesize 4096 --dt $KERNELDIR/arch/arm/boot/dt.img -o $KERNELDIR/boot.img
+$TOOLBASE/mkbootimg --base 0x00000000 --kernel $KERNELDIR/arch/arm/boot/zImage-dtb --kernel_offset 0x00008000 --ramdisk $RAMFS_TMP.cpio.gz --cmdline 'console=ttyHSL0,115200,n8 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3 dwc3_msm.cpu_to_affin=1' --ramdisk_offset 0x02200000 --tags_offset 0x02000000 --pagesize 4096 --dt $KERNELDIR/arch/arm/boot/dt.img -o $KERNELDIR/boot.img
 
 echo "Started  : $start_time"
 echo "Finished : `date +'%d/%m/%y %H:%M:%S'`"
@@ -169,11 +185,6 @@ echo "#################### Eliminando restos ####################"
 
 rm $KERNELDIR/releasetools/zip/boot.img > /dev/null 2>&1
 rm $KERNELDIR/releasetools/tar/boot.img > /dev/null 2>&1
-#rm $KERNELDIR/boot.img > /dev/null 2>&1
-#rm $KERNELDIR/zImage > /dev/null 2>&1
-#rm $KERNELDIR/zImage-dtb > /dev/null 2>&1
-#rm $KERNELDIR/boot.dt.img > /dev/null 2>&1
-#rm $KERNELDIR/arch/arm/boot/dt.img > /dev/null 2>&1
 rm -rf /home/lonas/Kernel_Lonas/tmp/ramfs-source-sgs5 > /dev/null 2>&1
 rm /home/lonas/Kernel_Lonas/tmp/ramfs-source-sgs5.cpio.gz > /dev/null 2>&1
 echo "#################### Terminado ####################"

@@ -32,6 +32,8 @@ on early-init
     mount debugfs debugfs /sys/kernel/debug
 
 on init
+    chmod 0701 /mnt/media_rw
+    mkdir /storage 0775 system system
     # See storage config details at http://source.android.com/tech/storage/
     mkdir /mnt/media_rw/extSdCard 0700 media_rw media_rw
     mkdir /mnt/media_rw/UsbDriveA 0700 media_rw media_rw
@@ -45,7 +47,7 @@ on init
     mkdir /persist 0771 system system
     # See storage config details at http://source.android.com/tech/storage/
     mkdir /mnt/shell/emulated 0700 shell shell
-    mkdir /storage/emulated 0555 root root
+    mkdir /storage/emulated 0770 root root    
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
@@ -54,12 +56,13 @@ on init
     #export BOOTCLASSPATH ${BOOTCLASSPATH}:/system/framework/qcom.fmradio.jar
 
     export SECONDARY_STORAGE /storage/extSdCard
-    mkdir /storage/extSdCard 0555 root root
+    mkdir /storage/extSdCard 0770 root root
     # Support legacy paths
     symlink /storage/emulated/legacy /sdcard
     symlink /storage/emulated/legacy /mnt/sdcard
     symlink /storage/emulated/legacy /storage/sdcard0
     symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+    symlink /storage/extSdCard /extSdCard
 
     # map "real" external storages paths also in same way. backwards compatibility.
     symlink /storage/extSdCard /mnt/extSdCard
@@ -71,14 +74,14 @@ on init
     symlink /storage/UsbDriveF /mnt/UsbDriveF
 
     export SECONDARY_STORAGE /storage/extSdCard
-
-    mkdir /storage/extSdCard 0700 root root
-    mkdir /storage/UsbDriveA 0700 root root
-    mkdir /storage/UsbDriveB 0700 root root
-    mkdir /storage/UsbDriveC 0700 root root
-    mkdir /storage/UsbDriveD 0700 root root
-    mkdir /storage/UsbDriveE 0700 root root
-    mkdir /storage/UsbDriveF 0700 root root
+    
+    mkdir /storage/extSdCard 0770 root root
+    mkdir /storage/UsbDriveA 0770 root root
+    mkdir /storage/UsbDriveB 0770 root root
+    mkdir /storage/UsbDriveC 0770 root root
+    mkdir /storage/UsbDriveD 0770 root root
+    mkdir /storage/UsbDriveE 0770 root root
+    mkdir /storage/UsbDriveF 0770 root root
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
@@ -88,6 +91,9 @@ on early-boot
     write /sys/kernel/boot_adsp/boot 1
 
 on boot
+
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
@@ -124,7 +130,7 @@ on boot
     chown system radio /sys/class/android_usb/android0/usb_lock
 
     #Audience ES705 UART
-    chmod 0660 /dev/ttyHS3
+    chmod 0666 /dev/ttyHS3
     chown system system /dev/ttyHS3
 
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/device/extldo
@@ -234,13 +240,13 @@ on boot
 # msm specific files that need to be created on /data
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
-    mkdir /data/media 0770 media_rw media_rw
+    mkdir /data/media 0775 media_rw media_rw
     chown media_rw media_rw /data/media
 
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
     # Create the directories used by the Wireless subsystem
-    mkdir /data/misc/wifi 0770 wifi system
+    mkdir /data/misc/wifi 0775 wifi system
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     mkdir /data/misc/dhcp 0775 dhcp dhcp
@@ -256,14 +262,14 @@ on post-fs-data
 
     # for WIFI MAC address
     mkdir /efs/wifi 0775 radio system
-    chown system wifi /efs/wifi/.mac.info
-    chmod 0660 /efs/wifi/.mac.info
-    chmod 0660 /efs/wifi/.mac.cob
+    chown system system /efs/wifi/.mac.info
+    chmod 0664 /efs/wifi/.mac.info
+    chmod 0664 /efs/wifi/.mac.cob
 
     # for WIFI Version
     write /data/.wifiver.info 0
     chown system root /data/.wifiver.info
-    chmod 0664 /data/.wifiver.info
+    chmod 0666 /data/.wifiver.info
 
     # Create the directories used by CnE subsystem
     mkdir /data/connectivity 0771 system system
@@ -323,6 +329,8 @@ on post-fs-data
     mkdir /data/time/ 0700 system system
 
     mkdir /data/audio/ 0770 media audio
+    # Enable the setgid bit on the directory
+    chmod 2770 /data/audio
 
     setprop vold.post_fs_data_done 1
 
@@ -415,13 +423,15 @@ on property:bluetooth.startbtsnoop=false
     stop btsnoop
 
 service qcom-c_core-sh /system/bin/sh /init.qcom.class_core.sh
-    class core
+    class late_start
     user root
+    group system
     oneshot
 
 service qcom-c_main-sh /system/bin/sh /init.class_main.sh
-    class main
+    class late_start
     user root
+    group system
     oneshot
 
 on property:vold.decrypt=trigger_restart_framework
@@ -469,8 +479,9 @@ service start_hci_filter /system/bin/wcnss_filter
     disabled
 
 service config_bluetooth /system/bin/sh /system/etc/init.qcom.bt.sh "onboot"
-    class core
+    class late_start
     user root
+    group system
     oneshot
 
 service hciattach /system/bin/sh /system/etc/init.qcom.bt.sh
@@ -781,6 +792,10 @@ on property:crypto.driver.load=1
      insmod /system/lib/modules/qce.ko
      insmod /system/lib/modules/qcedev.ko
 
+on property:crypto.driver.load=0
+     exec /system/bin/rmmod qcedev.ko
+     exec /system/bin/rmmod qce.ko
+
 service drmdiag /system/bin/drmdiagapp
     class late_start
      user root
@@ -796,13 +811,15 @@ on property:drmdiag.load=0
 service qcom-sh /system/bin/sh /init.qcom.sh
     class late_start
     user root
+    group system
     oneshot
 
 service qcom-post-boot /system/bin/sh /system/etc/init.qcom.post_boot.sh
     class late_start
     user root
-    disabled
+    group system
     oneshot
+    disabled
 
 service wifi-sdio-on /system/bin/sh /system/etc/init.qcom.sdio.sh
     class late_start
@@ -811,10 +828,11 @@ service wifi-sdio-on /system/bin/sh /system/etc/init.qcom.sdio.sh
     oneshot
 
 service wifi-crda /system/bin/sh /system/etc/init.crda.sh
-   class late_start
-   user root
-   disabled
-   oneshot
+    class late_start
+    user root
+    group system
+    oneshot
+    disabled
 
 
 on property:sys.boot_completed=1
