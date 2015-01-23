@@ -27,6 +27,7 @@ export REVISION="RC"
 export KBUILD_BUILD_VERSION="1"
 
 export KCONFIG_NOTIMESTAMP=true
+export ARCH=arm
 
 export BOARD_VENDOR=samsung
 export TARGET_ARCH=arm
