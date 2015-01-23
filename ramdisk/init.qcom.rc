@@ -47,7 +47,7 @@ on init
     mkdir /persist 0771 system system
     # See storage config details at http://source.android.com/tech/storage/
     mkdir /mnt/shell/emulated 0700 shell shell
-    mkdir /storage/emulated 0770 root root    
+    mkdir /storage/emulated 0770 root root
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
@@ -74,7 +74,7 @@ on init
     symlink /storage/UsbDriveF /mnt/UsbDriveF
 
     export SECONDARY_STORAGE /storage/extSdCard
-    
+
     mkdir /storage/extSdCard 0770 root root
     mkdir /storage/UsbDriveA 0770 root root
     mkdir /storage/UsbDriveB 0770 root root
@@ -262,7 +262,7 @@ on post-fs-data
 
     # for WIFI MAC address
     mkdir /efs/wifi 0775 radio system
-    chown system system /efs/wifi/.mac.info
+    chown system wifi /efs/wifi/.mac.info
     chmod 0664 /efs/wifi/.mac.info
     chmod 0664 /efs/wifi/.mac.cob
 
