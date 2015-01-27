@@ -568,6 +568,30 @@ static int genl_lock_done(struct netlink_callback *cb)
 	return rc;
 }
 
+static int genl_lock_dumpit(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct genl_ops *ops = cb->data;
+	int rc;
+
+	genl_lock();
+	rc = ops->dumpit(skb, cb);
+	genl_unlock();
+	return rc;
+}
+
+static int genl_lock_done(struct netlink_callback *cb)
+{
+	struct genl_ops *ops = cb->data;
+	int rc = 0;
+
+	if (ops->done) {
+		genl_lock();
+		rc = ops->done(cb);
+		genl_unlock();
+	}
+	return rc;
+}
+
 static int genl_family_rcv_msg(struct genl_family *family,
 			       struct sk_buff *skb,
 			       struct nlmsghdr *nlh)
