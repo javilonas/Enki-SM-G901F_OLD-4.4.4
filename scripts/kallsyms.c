@@ -201,6 +201,9 @@ static int symbol_valid(struct sym_entry *s)
 	if (s->addr < kernel_start_addr)
 		return 0;
 
+	if (s->addr < kernel_start_addr)
+		return 0;
+
 	/* skip prefix char */
 	if (symbol_prefix_char && *(s->sym + 1) == symbol_prefix_char)
 		offset++;
