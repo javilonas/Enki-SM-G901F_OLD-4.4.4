@@ -1652,7 +1652,7 @@ static int __match_devt(struct device *dev, const void *data)
  */
 void device_destroy(struct class *class, dev_t devt)
 {
-	struct device *dev;
+	struct device *dev, *parent;
 
 	dev = class_find_device(class, NULL, &devt, __match_devt);
 	if (dev) {
