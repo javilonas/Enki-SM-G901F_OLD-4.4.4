@@ -180,6 +180,7 @@ static void elevator_release(struct kobject *kobj)
 	elevator_put(e->type);
 	kfree(e);
 }
+EXPORT_SYMBOL(elevator_alloc);
 
 int elevator_init(struct request_queue *q, char *name)
 {
