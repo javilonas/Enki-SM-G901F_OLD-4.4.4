@@ -74,12 +74,16 @@ if [ -f $ROOTFS_PATH/res/ext/99SuperSUDaemon ]; then
 fi
 chmod 755 $ROOTFS_PATH/sys
 chmod 755 $ROOTFS_PATH/system
+chmod 750 $ROOTFS_PATH/sbin/adbd*
+chmod 750 $ROOTFS_PATH/sbin/healthd
 
 find . -type f -name '*.h' -exec chmod 644 {} \;
 find . -type f -name '*.c' -exec chmod 644 {} \;
 find . -type f -name '*.py' -exec chmod 755 {} \;
 find . -type f -name '*.sh' -exec chmod 755 {} \;
 find . -type f -name '*.pl' -exec chmod 755 {} \;
+
+chmod 700 $ROOTFS_PATH/sbin/post-boot.sh
 
 echo "ramfs_tmp = $RAMFS_TMP"
 

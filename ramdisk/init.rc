@@ -13,10 +13,11 @@ import /init.${ro.hardware}.rc
 import /init.trace.rc
 import /init.carrier.rc
 import /init.container.rc
+import /init.post-boot.rc
 
 on early-init
     # Set init and its forked children's oom_adj.
-    write /proc/1/oom_adj -16
+    write /proc/1/oom_score_adj -1000
 
     # Set the security context for the init process.
     # This should occur before anything else (e.g. ueventd) is started.
@@ -932,8 +933,8 @@ service auditd /system/bin/auditd -k
     disabled
     oneshot
 
-on property:ro.debuggable=1
-    start console
+#on property:ro.debuggable=1
+#    start console
 
 # adbd is controlled via property triggers in init.<platform>.usb.rc
 service adbd /sbin/adbd

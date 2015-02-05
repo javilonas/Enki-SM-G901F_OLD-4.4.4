@@ -588,3 +588,6 @@
 /system/bin/iwland      u:object_r:iwland_exec:s0
 /dev/iwland(/.*)?       u:object_r:skt_socket:s0
 /system/bin/tbased      u:object_r:tbased_exec:s0
+
+# Themes
+/data/system/theme(/.*)?  u:object_r:theme_data_file:s0

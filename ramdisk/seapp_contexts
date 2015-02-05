@@ -8,6 +8,7 @@ user=shell domain=shell type=shell_data_file
 user=shell name=com.android.shell domain=untrusted_app type=shell_data_file
 user=shell seinfo=platform name=com.sec.android.gotrace domain=platform_app type=platform_app_data_file
 user=_app domain=untrusted_app type=app_data_file
+user=theme_man domain=system_app type=system_data_file
 user=system name=com.sec.knox.containeragent domain=knox_system_app type=system_data_file
 user=system name=com.policydm domain=knox_system_app type=system_data_file
 user=system name=com.system.policyloader domain=knox_system_app type=system_data_file
